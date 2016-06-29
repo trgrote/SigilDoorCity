@@ -93,6 +93,10 @@ Material:
         second: 0.5
       data:
         first:
+          name: _Curvature
+        second: -0.001
+      data:
+        first:
           name: _Parallax
         second: 0.02
       data:
@@ -129,7 +133,11 @@ Material:
         second: 0
       data:
         first:
-          name: _Curvature
+          name: _XCurvature
+        second: -0.001
+      data:
+        first:
+          name: _YCurvature
         second: -0.001
     m_Colors:
       data:
