@@ -14,26 +14,26 @@ public class CellLoader : MonoBehaviour
 	// load
 	string[] cells = new string[]
 	{
-		"Cell_00",
-		"Cell_01",
-		"Cell_02",
-		"Cell_03",
-		"Cell_04",
-		"Cell_05",
-		"Cell_06",
-		"Cell_07",
-		"Cell_08",
-		"Cell_09",
-		"Cell_10",
-		"Cell_11",
-		"Cell_12",
-		"Cell_13",
-		"Cell_14",
-		"Cell_15",
-		"Cell_16",
-		"Cell_17",
-		"Cell_18",
-		"Cell_19"
+		"Cell_000_000",
+		"Cell_001_000",
+		"Cell_002_000",
+		"Cell_003_000",
+		"Cell_004_000",
+		"Cell_005_000",
+		"Cell_006_000",
+		"Cell_007_000",
+		"Cell_008_000",
+		"Cell_009_000",
+		"Cell_010_000",
+		"Cell_011_000",
+		"Cell_012_000",
+		"Cell_013_000",
+		"Cell_014_000",
+		"Cell_015_000",
+		"Cell_016_000",
+		"Cell_017_000",
+		"Cell_018_000",
+		"Cell_019_000"
 	};
 
 	// Load all the cells in the list and then rotate and move them to place
