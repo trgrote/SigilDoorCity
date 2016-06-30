@@ -2,12 +2,16 @@
 using UnityEngine.SceneManagement;
 using System.Collections;
 
-// The purpose of this script tis to monitor the player's movement.  If the
-// player moves beyond the bounds of a cell, then evaluate if we need to load
-// another cell and unload a cell behind him.
+// Load the Cells for LOD
+// This will eventually load the LOD versions of each cell, in the shape of a
+// torus
 public class CellLoader : MonoBehaviour
 {
+	// Width in Units for each call ( needs to be uniform across all cells
 	const float cellWidth = 100;
+
+	// List of all cells, I could remove this and replace it with a search and
+	// load
 	string[] cells = new string[]
 	{
 		"Cell_00",
@@ -32,6 +36,11 @@ public class CellLoader : MonoBehaviour
 		"Cell_19"
 	};
 
+	// Load all the cells in the list and then rotate and move them to place
+	// them correctly
+	// It Should load the cells starting from the bottom of the circle, in a
+	// counter clockwise direction, so cell_01 will be to the right of cell_00,
+	// and the last cell will be the left of cell_00.
 	IEnumerator Start()
 	{
 		float change_in_rotation = 360f / (float) cells.Length;
