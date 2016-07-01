@@ -1,6 +1,9 @@
 ﻿using UnityEngine;
 using UnityEngine.SceneManagement;
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.IO;
 
 // Load the Cells for LOD
 // This will eventually load the LOD versions of each cell, in the shape of a
@@ -9,32 +12,70 @@ public class CellLoader : MonoBehaviour
 {
 	// Width in Units for each call ( needs to be uniform across all cells
 	const float cellWidth = 100;
+	const float cellDepth = 100;
 
-	// List of all cells, I could remove this and replace it with a search and
-	// load
-	string[] cells = new string[]
+	// How many cells exist longways
+	const int cellGridWidth = 30;
+	// How many cells exist shortways
+	const int cellGridDepth = 10;
+
+	// IN Degrees, how big is the hole that is on the inside of the torus
+	//const float innerRingHoleSize = 90;
+	const float innerRingHoleSize = 0;
+
+	// Return all cells in the cell folder
+	string[] getAllCells()
 	{
-		"Cell_000_000",
-		"Cell_001_000",
-		"Cell_002_000",
-		"Cell_003_000",
-		"Cell_004_000",
-		"Cell_005_000",
-		"Cell_006_000",
-		"Cell_007_000",
-		"Cell_008_000",
-		"Cell_009_000",
-		"Cell_010_000",
-		"Cell_011_000",
-		"Cell_012_000",
-		"Cell_013_000",
-		"Cell_014_000",
-		"Cell_015_000",
-		"Cell_016_000",
-		"Cell_017_000",
-		"Cell_018_000",
-		"Cell_019_000"
-	};
+		string folderName = Application.dataPath + "/Scenes/Cells";
+		var dirInfo = new DirectoryInfo(folderName);
+		var allFileInfos = dirInfo.GetFiles("*.unity", SearchOption.AllDirectories);
+		var allFileNames = new string[ allFileInfos.Length ];
+
+		for ( int i = 0 ; i < allFileInfos.Length ; ++i )
+		{
+			var fileInfo = allFileInfos[ i ];
+			allFileNames[ i ] = fileInfo.Name;
+		}
+
+		return allFileNames;
+	}
+
+	// Return a map containing a mapping of [X,Y] => Cell Scene
+	// Will Throw a little hissy fit if it can't find a cell named correctly
+	Dictionary<Vector2i, Scene> GetAllCells( int width, int height )
+	{
+		Dictionary<Vector2i, Scene> rval = new Dictionary<Vector2i, Scene>();
+
+		for ( int col = 0 ; col < width ; ++col )
+		{
+			for ( int row = 0 ; row < height ; ++row )
+			{
+				// Format SHOULD be Cell_XXX_YYY.unity
+				string sceneName = String.Format(
+					"Cell_{0}_{1}",
+					row.ToString().PadLeft( 3, '0' ),
+					col.ToString().PadLeft( 3, '0' )
+				);
+
+				var scene = SceneManager.GetSceneByName( sceneName );
+
+				// Make sure the scene is valid
+				if ( scene.IsValid() )
+				{
+					// Add the Scene to the dictionary
+					rval[ new Vector2i( row, col ) ] = scene;
+				}
+				else
+				{
+					Debug.LogWarning( "Failed to find scene " + sceneName );
+				}
+			}
+		}
+
+		return rval;
+	}
+
+	Dictionary<Vector2i, Scene> cellMap = new Dictionary<Vector2i, Scene>();
 
 	// Load all the cells in the list and then rotate and move them to place
 	// them correctly
@@ -43,51 +84,121 @@ public class CellLoader : MonoBehaviour
 	// and the last cell will be the left of cell_00.
 	IEnumerator Start()
 	{
-		float change_in_rotation = 360f / (float) cells.Length;
-		float radius = ( cellWidth * cells.Length ) / ( 2 * Mathf.PI );
+		float change_in_rotation = 360f / (float) cellGridWidth;
+		float radius = ( cellWidth * cellGridWidth ) / ( 2 * Mathf.PI );
 
-		for ( int i = 0 ; i < cells.Length; ++i )
+		// Calulate rotaion within the outer ring
+		float intialCircumfrence = cellDepth * cellGridDepth;    // Circumfrence if the hole wasn't there
+		float units_to_degrees = intialCircumfrence / (360f - innerRingHoleSize);    // Get Ratio of Units to Degrees ( m/d )
+		float missing_circumfrence = units_to_degrees * innerRingHoleSize;  // Based off the above ratio, how much circumfrence would the missing chunk have taken? d * (m/d) = m
+		float total_depth_circumfrence = missing_circumfrence + intialCircumfrence;  // Combine the width of all the cells + the missing peice to get the full circumfrence
+
+		float depth_radius = total_depth_circumfrence / ( 2 * Mathf.PI );   // Get the radius of the out ring
+		float change_in_depth_rotation = ( 360f - innerRingHoleSize ) / (float) cellGridDepth;   // The remaining degrees given out evently amongst the surrounding cells
+
+		// Iterate over all what we think should be loaded
+		for ( int col = 0 ; col < cellGridWidth ; ++col )
 		{
-			// Start the Load for this level
-			yield return SceneManager.LoadSceneAsync(cells[i], LoadSceneMode.Additive);
-
-			var scene = SceneManager.GetSceneByName(cells[i]);
-
-			// Find GameObject Named
-			var rootObjects = scene.GetRootGameObjects();
-
-			// Find the base object
-			GameObject parent = null;
-
-			foreach (var obj in rootObjects)
+			for ( int row = 0 ; row < cellGridDepth ; ++row )
 			{
-				if ( obj.name == "Parent" )
+				// Format SHOULD be Cell_XXX_YYY.unity
+				string sceneName = String.Format(
+					"Cell_{0}_{1}",
+					col.ToString().PadLeft( 3, '0' ),
+					row.ToString().PadLeft( 3, '0' )
+				);
+
+				// Load this bad boy up
+				yield return SceneManager.LoadSceneAsync( sceneName, LoadSceneMode.Additive);
+
+				var scene = SceneManager.GetSceneByName( sceneName );
+
+				// Make sure the scene is valid
+				if ( scene.IsValid() )
 				{
-					parent = obj;
-				}
-			}
+					// Add the Scene to the dictionary
+					cellMap[ new Vector2i( col, row) ] = scene;
 
-			// Rotate parent
-			if ( parent )
-			{
-				// Find Ground
-				var ground = parent.transform.Find("Ground");
+					// Do all this nasty stuff to it
 
-				if ( ground )
-				{
-					// Cool, rotate parent, then move ground down
-					parent.transform.rotation = Quaternion.Euler( 0, 0, change_in_rotation * i );
+					// The Parent Object is the base most object in a scene, here we
+					// rotate the cell along the z-axis.  This siumlates the cell's
+					// rotation around the center of Sigil
+					//
+					// The OuterRingPivot is supposed to be the inside point of the
+					// outer ring.  This point is pushed down to the center of the
+					// outer ring and then rotated along the x-axis to rotate the cell
+					// along the inner width of the torus
+					//
+					// The Ground object is the plane on which all the cell geometry
+					// sits.  It's pushed down by the radius of the outer ring.
 
-					ground.transform.localPosition = new Vector3( 0, -radius, 0 );
+					// Find the base object
+					var rootObjects = scene.GetRootGameObjects();
+					GameObject parent = null;
+
+					// Find Parent in the Cell
+					foreach (var obj in rootObjects)
+					{
+						if ( obj.name == "Parent" )
+						{
+							parent = obj;
+						}
+					}
+
+					if ( parent )
+					{
+						var outerRingPivot = parent.transform.Find("OuterRingPivot");
+
+						if ( outerRingPivot )
+						{
+							// Find Ground
+							var ground = outerRingPivot.transform.Find("Ground");
+
+							if ( ground )
+							{
+								//  Cool, I got everything
+
+								// First Rotate the parent
+								parent.transform.rotation = Quaternion.Euler( 0, 0, change_in_rotation * col );
+
+								// Move the OuterRingPivotDown by InnerRing Radius -
+								// OuterRingRadius so that is located in the middle of
+								// the outer ring
+								outerRingPivot.transform.localPosition = new Vector3(0, -(radius - depth_radius), 0);
+								outerRingPivot.transform.localRotation = Quaternion.Euler(
+									//( innerRingHoleSize / 2 ) + ( change_in_depth_rotation / 2 ) + ( change_in_depth_rotation * row ),
+									//( innerRingHoleSize / 2 ) + ( change_in_depth_rotation * row ),
+									//( change_in_depth_rotation / 2 ) + ( change_in_depth_rotation * row ),
+									change_in_depth_rotation * row,
+									0,
+									0
+								);
+
+								// rotate pivot along x-axis so it fits up against the wall
+
+								// Push Ground Down by the radius of the outer circle
+								ground.transform.localPosition = new Vector3( 0, -depth_radius, 0 );
+							}
+							else
+							{
+								Debug.LogWarning( "Loaded " + sceneName + " but could not find Parent->OuterRingPivot->Ground object in hierarchy");
+							}
+						}
+						else
+						{
+							Debug.LogWarning( "Loaded " + sceneName + " but could not find Parent->OuterRingPivot object in hierarchy");
+						}
+					}
+					else
+					{
+						Debug.LogWarning( "Loaded " + sceneName + " but could not find Parent object in hierarchy");
+					}
 				}
 				else
 				{
-					Debug.LogWarning( "Loaded " + cells[0] + " but could not find Parent->Ground object in hierarchy");
+					Debug.LogWarning( "Failed to find scene " + sceneName );
 				}
-			}
-			else
-			{
-				Debug.LogWarning( "Loaded " + cells[0] + " but could not find Parent object in hierarchy");
 			}
 		}
 	}
