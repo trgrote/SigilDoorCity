@@ -15,13 +15,12 @@ public class CellLoader : MonoBehaviour
 	const float cellDepth = 100;
 
 	// How many cells exist longways
-	const int cellGridWidth = 30;
+	const int cellGridWidth = 100;
 	// How many cells exist shortways
 	const int cellGridDepth = 10;
 
 	// IN Degrees, how big is the hole that is on the inside of the torus
-	//const float innerRingHoleSize = 90;
-	const float innerRingHoleSize = 0;
+	const float innerRingHoleSize = 45;
 
 	// Return all cells in the cell folder
 	string[] getAllCells()
@@ -167,10 +166,7 @@ public class CellLoader : MonoBehaviour
 								// the outer ring
 								outerRingPivot.transform.localPosition = new Vector3(0, -(radius - depth_radius), 0);
 								outerRingPivot.transform.localRotation = Quaternion.Euler(
-									//( innerRingHoleSize / 2 ) + ( change_in_depth_rotation / 2 ) + ( change_in_depth_rotation * row ),
-									//( innerRingHoleSize / 2 ) + ( change_in_depth_rotation * row ),
-									//( change_in_depth_rotation / 2 ) + ( change_in_depth_rotation * row ),
-									change_in_depth_rotation * row,
+									180 - ( ( innerRingHoleSize / 2 ) + ( change_in_depth_rotation / 2 ) + ( change_in_depth_rotation * row ) ),
 									0,
 									0
 								);
