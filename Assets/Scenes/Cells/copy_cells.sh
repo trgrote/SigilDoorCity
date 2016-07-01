@@ -35,9 +35,22 @@ then
 	exit 1
 fi
 
-for column in `seq -f "%03g" 0 $height`
+maxHeight=$(( $height - 1))
+maxWidth=$(( $width - 1))
+
+if [[ $maxHeight -lt 0 ]]
+then
+	maxHeight=0
+fi
+
+if [[ $maxWidth -lt 0 ]]
+then
+	maxWidth=0
+fi
+
+for column in `seq -f "%03g" 0 $maxHeight`
 do
-	for row in `seq -f "%03g" 0 $width`
+	for row in `seq -f "%03g" 0 $maxWidth`
 	do
 		if [ $row == "000" ] && [ $column == "000" ]
 		then
@@ -50,6 +63,11 @@ do
 		if [ -f $newScene ]
 		then
 			rm $newScene
+		fi
+
+		if [ -f "$newScene.meta" ]
+		then
+			rm "$newScene.meta"
 		fi
 
 		cp "Cell_000_000.unity" $newScene
