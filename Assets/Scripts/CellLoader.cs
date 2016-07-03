@@ -14,6 +14,8 @@ public class CellLoader : MonoBehaviour
 	const float cellWidth = 100;
 	const float cellDepth = 100;
 
+	// According to lore, the ratio of width to the depth is 1 cell depth for
+	// every 10 cells in width
 	// How many cells exist longways
 	const int cellGridWidth = 100;
 	// How many cells exist shortways
@@ -22,8 +24,43 @@ public class CellLoader : MonoBehaviour
 	// IN Degrees, how big is the hole that is on the inside of the torus
 	const float innerRingHoleSize = 45;
 
+	float innerRingRadius = 0.0f;
+
+	float outerRingRadius = 0.0f;
+
+	// Distance from the center of the torus to the center of the outer ring
+	// NOT distance from the center of the torus to the outer most edge (R)
+	float distanceToCenterOfOuterRing
+	{
+		get
+		{
+			return innerRingRadius - outerRingRadius;
+		}
+	}
+
+	// Return the Gravity force direction at the given position of Sigil
+	public Vector3 GetGravityAtPosition(Vector3 position)
+	{
+		// Find unit vector from center out of the torus to current position
+		// Multiply that vector by the inner ring radius.  That should be the
+		// center of the outer ring. This should be just X and Y coordinates
+		Vector3 closestCenter = position;
+		closestCenter.z = 0;   // Not concerned with z atm
+		closestCenter.Normalize();   // Direction from center of radius to position cast to just the x-y plane
+		closestCenter = closestCenter * distanceToCenterOfOuterRing;    // multiply direction from center by radius size to get the closest center of the outer radius
+
+		// Then find the unit vector from center to the center of the outer ring
+		// that was found in the previous step.
+		// That should be a unit vecotr pointing from the center of the outer
+		// ring to the position given.
+		Vector3 gravityDirection = closestCenter - position;
+		gravityDirection.Normalize();
+
+		return gravityDirection;
+	}
+
 	// Return all cells in the cell folder
-	string[] getAllCells()
+	string[] GetAllCellsInDirectory()
 	{
 		string folderName = Application.dataPath + "/Scenes/Cells";
 		var dirInfo = new DirectoryInfo(folderName);
@@ -84,7 +121,7 @@ public class CellLoader : MonoBehaviour
 	IEnumerator Start()
 	{
 		float change_in_rotation = 360f / (float) cellGridWidth;
-		float radius = ( cellWidth * cellGridWidth ) / ( 2 * Mathf.PI );
+		innerRingRadius = ( cellWidth * cellGridWidth ) / ( 2 * Mathf.PI );
 
 		// Calulate rotaion within the outer ring
 		float intialCircumfrence = cellDepth * cellGridDepth;    // Circumfrence if the hole wasn't there
@@ -92,7 +129,7 @@ public class CellLoader : MonoBehaviour
 		float missing_circumfrence = units_to_degrees * innerRingHoleSize;  // Based off the above ratio, how much circumfrence would the missing chunk have taken? d * (m/d) = m
 		float total_depth_circumfrence = missing_circumfrence + intialCircumfrence;  // Combine the width of all the cells + the missing peice to get the full circumfrence
 
-		float depth_radius = total_depth_circumfrence / ( 2 * Mathf.PI );   // Get the radius of the out ring
+		outerRingRadius = total_depth_circumfrence / ( 2 * Mathf.PI );   // Get the radius of the out ring
 		float change_in_depth_rotation = ( 360f - innerRingHoleSize ) / (float) cellGridDepth;   // The remaining degrees given out evently amongst the surrounding cells
 
 		// Iterate over all what we think should be loaded
@@ -164,7 +201,7 @@ public class CellLoader : MonoBehaviour
 								// Move the OuterRingPivotDown by InnerRing Radius -
 								// OuterRingRadius so that is located in the middle of
 								// the outer ring
-								outerRingPivot.transform.localPosition = new Vector3(0, -(radius - depth_radius), 0);
+								outerRingPivot.transform.localPosition = new Vector3(0, -(innerRingRadius - outerRingRadius), 0);
 								outerRingPivot.transform.localRotation = Quaternion.Euler(
 									180 - ( ( innerRingHoleSize / 2 ) + ( change_in_depth_rotation / 2 ) + ( change_in_depth_rotation * row ) ),
 									0,
@@ -174,7 +211,7 @@ public class CellLoader : MonoBehaviour
 								// rotate pivot along x-axis so it fits up against the wall
 
 								// Push Ground Down by the radius of the outer circle
-								ground.transform.localPosition = new Vector3( 0, -depth_radius, 0 );
+								ground.transform.localPosition = new Vector3( 0, -outerRingRadius, 0 );
 							}
 							else
 							{
