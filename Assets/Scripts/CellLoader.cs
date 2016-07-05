@@ -53,7 +53,7 @@ public class CellLoader : MonoBehaviour
 		// that was found in the previous step.
 		// That should be a unit vecotr pointing from the center of the outer
 		// ring to the position given.
-		Vector3 gravityDirection = closestCenter - position;
+		Vector3 gravityDirection = position - closestCenter;
 		gravityDirection.Normalize();
 
 		return gravityDirection;
