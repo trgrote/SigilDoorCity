@@ -113,26 +113,9 @@ public class CellLoader : MonoBehaviour
 
 	Dictionary<Vector2i, Scene> cellMap = new Dictionary<Vector2i, Scene>();
 
-	// Load all the cells in the list and then rotate and move them to place
-	// them correctly
-	// It Should load the cells starting from the bottom of the circle, in a
-	// counter clockwise direction, so cell_01 will be to the right of cell_00,
-	// and the last cell will be the left of cell_00.
-	// TODO: Afraid going to run into a race condition with external references
-	IEnumerator Start()
+	// Load all the Cells into the Main Scene one by one
+	IEnumerator LoadAllCells()
 	{
-		float change_in_rotation = 360f / (float) cellGridWidth;
-		innerRingRadius = ( cellWidth * cellGridWidth ) / ( 2 * Mathf.PI );
-
-		// Calulate rotaion within the outer ring
-		float intialCircumfrence = cellDepth * cellGridDepth;    // Circumfrence if the hole wasn't there
-		float units_to_degrees = intialCircumfrence / (360f - innerRingHoleSize);    // Get Ratio of Units to Degrees ( m/d )
-		float missing_circumfrence = units_to_degrees * innerRingHoleSize;  // Based off the above ratio, how much circumfrence would the missing chunk have taken? d * (m/d) = m
-		float total_depth_circumfrence = missing_circumfrence + intialCircumfrence;  // Combine the width of all the cells + the missing peice to get the full circumfrence
-
-		outerRingRadius = total_depth_circumfrence / ( 2 * Mathf.PI );   // Get the radius of the out ring
-		float change_in_depth_rotation = ( 360f - innerRingHoleSize ) / (float) cellGridDepth;   // The remaining degrees given out evently amongst the surrounding cells
-
 		// Iterate over all what we think should be loaded
 		for ( int col = 0 ; col < cellGridWidth ; ++col )
 		{
@@ -235,5 +218,31 @@ public class CellLoader : MonoBehaviour
 				}
 			}
 		}
+	}
+
+	float change_in_rotation;
+	float change_in_depth_rotation;
+
+	// Load all the cells in the list and then rotate and move them to place
+	// them correctly
+	// It Should load the cells starting from the bottom of the circle, in a
+	// counter clockwise direction, so cell_01 will be to the right of cell_00,
+	// and the last cell will be the left of cell_00.
+	// TODO: Afraid going to run into a race condition with external references
+	void Start()
+	{
+		change_in_rotation = 360f / (float) cellGridWidth;
+		innerRingRadius = ( cellWidth * cellGridWidth ) / ( 2 * Mathf.PI );
+
+		// Calulate rotaion within the outer ring
+		float intialCircumfrence = cellDepth * cellGridDepth;    // Circumfrence if the hole wasn't there
+		float units_to_degrees = intialCircumfrence / (360f - innerRingHoleSize);    // Get Ratio of Units to Degrees ( m/d )
+		float missing_circumfrence = units_to_degrees * innerRingHoleSize;  // Based off the above ratio, how much circumfrence would the missing chunk have taken? d * (m/d) = m
+		float total_depth_circumfrence = missing_circumfrence + intialCircumfrence;  // Combine the width of all the cells + the missing peice to get the full circumfrence
+
+		outerRingRadius = total_depth_circumfrence / ( 2 * Mathf.PI );   // Get the radius of the out ring
+		change_in_depth_rotation = ( 360f - innerRingHoleSize ) / (float) cellGridDepth;   // The remaining degrees given out evently amongst the surrounding cells
+
+		StartCoroutine( LoadAllCells() );
 	}
 }
