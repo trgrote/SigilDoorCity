@@ -118,6 +118,7 @@ public class CellLoader : MonoBehaviour
 	// It Should load the cells starting from the bottom of the circle, in a
 	// counter clockwise direction, so cell_01 will be to the right of cell_00,
 	// and the last cell will be the left of cell_00.
+	// TODO: Afraid going to run into a race condition with external references
 	IEnumerator Start()
 	{
 		float change_in_rotation = 360f / (float) cellGridWidth;
