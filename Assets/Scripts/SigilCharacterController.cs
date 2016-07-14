@@ -23,9 +23,9 @@ public class SigilCharacterController : MonoBehaviour
 
 	// Magnitude of Gravity
 	// TODO: Move this into like a Sigil Global Class
-	private float _gravityForce = 30;
+	private float _gravityForce = 50;   // Not really gravity, just velocity
 
-	private float _speed = 50;
+	private float _speed = 5;
 	private float _maxSpeed = 20f;
 
 #region Monobehavior
@@ -48,27 +48,32 @@ public class SigilCharacterController : MonoBehaviour
 
 	void FixedUpdate()
 	{
+
 		// HandleMovement
 		var input = GetInput();
 
 		Vector3 desiredMove = _cameraPivot.forward * input.y + _cameraPivot.right * input.x;
 
-		if (desiredMove.sqrMagnitude > 0)
-		{
-			// preserve down movement
-			var downVelocity = Vector3.Scale(_cameraPivot.up.Inverse(), _rigidbody.velocity);   // add down velocity back into desired speed to preserve downward movement from gravity
-			desiredMove *= _speed;
-			//desiredMove += downVelocity;
+		// preserve down movement
+		var downVelocity = Vector3.Scale(_cameraPivot.up.Inverse(), _rigidbody.velocity);   // add down velocity back into desired speed to preserve downward movement from gravity
 
-			_rigidbody.velocity = desiredMove;   // Afraid this isn't going to be local
-		}
+		//if (desiredMove.sqrMagnitude > 0)
+		//{
+			//desiredMove *= _speed;
+		//}
 
-		// TODO: Right now it's kinda weird, I can't move and fall at the same
-		// time.
+		//desiredMove += downVelocity;
+
+		// Apply Gravity
+		//desiredMove += _cameraPivot.up.Inverse() * _gravityForce * Time.fixedDeltaTime;
+		//desiredMove += downVelocity * _gravityForce * Time.fixedDeltaTime;
+
+		_rigidbody.MovePosition( transform.position + desiredMove * _speed );
+		//_rigidbody.velocity = desiredMove;
 
 		// Apply Gravitas
 		UpdateRotation( _gravity.Gravity );
-		_rigidbody.AddForce( _gravity.Gravity * _gravityForce );
+		//_rigidbody.AddForce( _gravity.Gravity * _gravityForce );
 	}
 
 #endregion

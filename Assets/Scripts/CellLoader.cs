@@ -22,7 +22,7 @@ public class CellLoader : MonoBehaviour
 	const int cellGridDepth = 10;
 
 	// IN Degrees, how big is the hole that is on the inside of the torus
-	const float innerRingHoleSize = 45;
+	const float innerRingHoleSize = 180;
 
 	float innerRingRadius = 0.0f;
 
